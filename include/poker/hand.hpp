@@ -34,6 +34,9 @@ public:
 
     Hand(const Hand&) = delete;
     Hand& operator=(const Hand&) = delete;
+    
+    Hand(Hand&&) = default;
+    Hand& operator=(Hand&&) = default;
 
     const Card& operator[](size_t i) const {
         return cards_[i];

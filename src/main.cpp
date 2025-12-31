@@ -1,6 +1,7 @@
 #include <poker/card.hpp>
 #include <poker/concepts.hpp>
 #include <poker/hand.hpp>
+#include <poker/deck.hpp>
 #include <iostream>
 
 const char* to_string(poker::HandRank rank) {
@@ -17,6 +18,43 @@ const char* to_string(poker::HandRank rank) {
         case poker::HandRank::TopCard:       return "Top Card";
         default:                             return "Unknown";
     }
+}
+
+const char* to_string(poker::Rank rank) {
+    switch (rank) {
+        case poker::Rank::Two:   return "2";
+        case poker::Rank::Three: return "3";
+        case poker::Rank::Four:  return "4";
+        case poker::Rank::Five:  return "5";
+        case poker::Rank::Six:   return "6";
+        case poker::Rank::Seven: return "7";
+        case poker::Rank::Eight: return "8";
+        case poker::Rank::Nine:  return "9";
+        case poker::Rank::Ten:   return "10";
+        case poker::Rank::Jack:  return "J";
+        case poker::Rank::Queen: return "Q";
+        case poker::Rank::King:  return "K";
+        case poker::Rank::Ace:   return "A";
+        default:                 return "?";
+    }
+}
+
+const char* to_string(poker::Suit suit) {
+    switch (suit) {
+        case poker::Suit::Clubs:    return "C";
+        case poker::Suit::Diamonds: return "D";
+        case poker::Suit::Hearts:   return "H";
+        case poker::Suit::Spades:   return "S";
+        default:                    return "?";
+    }
+}
+
+void print_hand(const poker::Hand<5>& hand) {
+    std::cout << "[ ";
+    for (size_t i = 0; i < 5; ++i) {
+        std::cout << to_string(hand[i].rank) << to_string(hand[i].suit) << " ";
+    }
+    std::cout << "] -> " << to_string(hand.evaluate()) << "\n";
 }
 
 int main() {
@@ -62,6 +100,23 @@ int main() {
     std::cout << "Flush:       " << to_string(flush.evaluate()) << "\n";
     std::cout << "Two Pair:    " << to_string(two_pair.evaluate()) << "\n";
     std::cout << "Top Card:    " << to_string(top_card.evaluate()) << "\n";
+    
+    // Deck Test
+    std::cout << "\n=== Deck Test ===\n";
+    Deck deck;
+    deck.shuffle();
+    
+    std::cout << "Remaining: " << deck.remaining() << "\n";
+    
+    auto hand1 = deck.deal<5>();
+    std::cout << "Hand 1: ";
+    print_hand(hand1);
+    std::cout << "Remaining: " << deck.remaining() << "\n";
+    
+    auto hand2 = deck.deal<5>();
+    std::cout << "Hand 2: ";
+    print_hand(hand2);
+    std::cout << "Remaining: " << deck.remaining() << "\n";
     
     return 0;
 }

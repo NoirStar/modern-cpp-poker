@@ -1,9 +1,11 @@
 #pragma once
 
 #include "card.hpp"
+#include "hand.hpp"
 #include <random>
 #include <algorithm>
 #include <array>
+#include <stdexcept>
 
 namespace poker {
 
@@ -44,6 +46,32 @@ public:
     void reset() {
         cards_ = detail::STANDARD_DECK;
         top_index_ = 0;
+    }
+
+    /*
+    deal<5>() 호출
+        ↓
+    make_index_sequence<5>{}  →  index_sequence<0,1,2,3,4> 생성
+        ↓
+    deal_impl<5>(index_sequence<0,1,2,3,4>) 호출
+        ↓
+    Hand<5>(cards_[0], cards_[1], cards_[2], cards_[3], cards_[4]) 반환
+    */
+    template<size_t N>
+    Hand<N> deal() {
+        if (top_index_ + N > 52) {
+            throw std::out_of_range("Not enough cards in deck");
+        }
+        // 번호표 만들어서 전달
+        auto hand = deal_impl<N>(std::make_index_sequence<N>{});
+        top_index_ += N;
+        return hand;
+    }
+
+    template<size_t N, size_t... I>
+    Hand<N> deal_impl(std::index_sequence<I...>) {
+        // 번호표(I...) 로 카드 꺼내서 Hand 생성
+        return Hand<N>(cards_[top_index_ + I]...);
     }
 
 private:
