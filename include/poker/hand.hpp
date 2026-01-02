@@ -20,6 +20,13 @@ enum class HandRank : std::uint8_t {
     RoyalFlush
 };
 
+struct HandValue {
+    HandRank rank;
+    std::array<Rank, 5> tiebreakers{};
+
+    auto operator<=>(const HandValue&) const = default;
+};
+
 template<size_t N>
 class Hand {
 public:
@@ -37,6 +44,14 @@ public:
     
     Hand(Hand&&) = default;
     Hand& operator=(Hand&&) = default;
+
+    auto operator<=>(const Hand& other) const {
+        return value() <=> other.value();
+    }
+
+    bool operator==(const Hand& other) const {
+        return value() == other.value();
+    }
 
     const Card& operator[](size_t i) const {
         return cards_[i];
@@ -71,6 +86,71 @@ public:
         // 위의 코드를 아래와 같이 fold expression을 써서 축약
 
         ((check<Ranks>() && (result = Ranks, true)) || ...);
+        return result;
+    }
+
+    HandValue value() const {
+        HandValue v;
+        v.rank = evaluate();
+        v.tiebreakers = compute_tiebreakers(v.rank);
+        return v;
+    }
+
+    std::array<Rank, 5> compute_tiebreakers(HandRank rank) const {
+        std::array<Rank, 5> result{};
+        auto counts = count_ranks();
+        size_t idx = 0;
+
+        // 헬퍼: 특정 count를 가진 랭크들을 높은 순으로 result에 추가
+        auto add_ranks_with_count = [&](int target_count) {
+            for (int i = 12; i >= 0; --i) {
+                if (counts[i] == target_count) {
+                    result[idx++] = static_cast<Rank>(i + 2);
+                }
+            }
+        };
+
+        // 헬퍼: cards_ 순서대로 추가 (이미 내림차순 정렬됨)
+        auto add_cards_in_order = [&]() {
+            for (size_t i = 0; i < N && idx < 5; ++i) {
+                result[idx++] = cards_[i].rank;
+            }
+        };
+
+        switch (rank) {
+            case HandRank::TopCard:
+            case HandRank::Straight:
+            case HandRank::Flush:
+            case HandRank::StraightFlush:
+            case HandRank::RoyalFlush:
+                add_cards_in_order();
+                break;
+
+            case HandRank::OnePair:
+                add_ranks_with_count(2);  // 페어
+                add_ranks_with_count(1);  // 키커들
+                break;
+
+            case HandRank::TwoPair:
+                add_ranks_with_count(2);  // 두 페어 (높은 순)
+                add_ranks_with_count(1);  // 키커
+                break;
+
+            case HandRank::ThreeOfKind:
+                add_ranks_with_count(3);  // 트리플
+                add_ranks_with_count(1);  // 키커들
+                break;
+
+            case HandRank::FullHouse:
+                add_ranks_with_count(3);  // 트리플
+                add_ranks_with_count(2);  // 페어
+                break;
+
+            case HandRank::FourOfKind:
+                add_ranks_with_count(4);  // 쿼드
+                add_ranks_with_count(1);  // 키커
+                break;
+        }
         return result;
     }
 
